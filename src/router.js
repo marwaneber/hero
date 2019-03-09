@@ -4,8 +4,10 @@ import partager from "@/comps/partager";
 import recents from "@/comps/recents";
 import page_404 from "@/comps/page_404";
 import signin from "@/comps/auth";
+import firebase from "@/fb";
+
 Vue.use(Router);
-export default new Router({
+let route = new Router({
   routes: [
     {
       path: "/",
@@ -26,7 +28,10 @@ export default new Router({
     {
       path: "/auth",
       name: "Signing",
-      component: signin
+      component: signin,
+      meta: {
+        signed: true
+      }
     },
     {
       path: "*",
@@ -35,3 +40,30 @@ export default new Router({
     }
   ]
 });
+
+route.beforeEach((to, from, next) => {
+  if (to.matched.some(record => record.meta.auth)) {
+    if (!firebase.auth().currentUser) {
+      next({
+        path: "/auth"
+      });
+    } else {
+      next();
+    }
+  } else {
+    next(); // make sure to always call next()!
+  }
+  if (to.matched.some(record => record.meta.signed)) {
+    if (!firebase.auth().currentUser) {
+      next({
+        path: "/"
+      });
+    } else {
+      next();
+    }
+  } else {
+    next(); // make sure to always call next()!
+  }
+});
+
+export default route;
